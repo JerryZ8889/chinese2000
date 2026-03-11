@@ -44,10 +44,8 @@ export default function WrongBookPage() {
     if (!user?.id) return
 
     try {
-      const { data } = await getUserWrongChars(user.id)
-      if (data) {
-        setWrongChars(data)
-      }
+      const data = await getUserWrongChars(user.id)
+      setWrongChars(data)
     } catch (error) {
       console.error('加载错字失败:', error)
     } finally {

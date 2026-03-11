@@ -6,8 +6,7 @@ export const recordWrongChar = async (
   char: string,
   stage: number,
   unit: number
-): Promise<{ data: WrongChar | null; error: Error | null }> => {
-  // 先检查是否已存在
+): Promise<WrongChar> => {
   const { data: existing } = await supabase
     .from('wrong_chars')
     .select('*')
@@ -16,7 +15,6 @@ export const recordWrongChar = async (
     .single()
 
   if (existing) {
-    // 更新错误次数
     const { data, error } = await supabase
       .from('wrong_chars')
       .update({
@@ -26,58 +24,54 @@ export const recordWrongChar = async (
       .eq('id', existing.id)
       .select()
       .single()
-    
-    return { data, error: error as Error | null }
+
+    if (error) throw error
+    return data
   }
 
-  // 创建新记录
   const { data, error } = await supabase
     .from('wrong_chars')
-    .insert({
-      user_id: userId,
-      char,
-      stage,
-      unit,
-      wrong_count: 1,
-      last_wrong_at: new Date().toISOString(),
-    })
+    .insert({ user_id: userId, char, stage, unit, wrong_count: 1, last_wrong_at: new Date().toISOString() })
     .select()
     .single()
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data
 }
 
-export const getUserWrongChars = async (userId: string): Promise<{ data: WrongChar[] | null; error: Error | null }> => {
+export const getUserWrongChars = async (userId: string): Promise<WrongChar[]> => {
   const { data, error } = await supabase
     .from('wrong_chars')
     .select('*')
     .eq('user_id', userId)
     .order('last_wrong_at', { ascending: false })
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data || []
 }
 
-export const deleteWrongChar = async (userId: string, char: string): Promise<{ error: Error | null }> => {
+export const deleteWrongChar = async (userId: string, char: string): Promise<void> => {
   const { error } = await supabase
     .from('wrong_chars')
     .delete()
     .eq('user_id', userId)
     .eq('char', char)
-  
-  return { error: error as Error | null }
+
+  if (error) throw error
 }
 
 export const getWrongCharsByStageUnit = async (
   userId: string,
   stage: number,
   unit: number
-): Promise<{ data: WrongChar[] | null; error: Error | null }> => {
+): Promise<WrongChar[]> => {
   const { data, error } = await supabase
     .from('wrong_chars')
     .select('*')
     .eq('user_id', userId)
     .eq('stage', stage)
     .eq('unit', unit)
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data || []
 }

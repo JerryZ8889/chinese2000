@@ -41,7 +41,7 @@ export default function ReportPage() {
       }
 
       try {
-        const { data } = await getUnitProgress(user.id, stage, unit)
+        const data = await getUnitProgress(user.id, stage, unit)
         if (data) {
           setScore(data.score || 0)
           setTotal(data.total || 20)

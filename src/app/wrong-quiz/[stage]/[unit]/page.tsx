@@ -63,8 +63,8 @@ export default function WrongCharQuizPage() {
     if (!user?.id) return
 
     try {
-      const { data } = await getWrongCharsByStageUnit(user.id, stage, unit)
-      if (data && data.length > 0) {
+      const data = await getWrongCharsByStageUnit(user.id, stage, unit)
+      if (data.length > 0) {
         setWrongChars(data)
       }
     } catch (error) {

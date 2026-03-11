@@ -28,7 +28,8 @@
       "Bash(ipconfig | grep -A 1 \"WLAN\\\\|Wi-Fi\\\\|无线\" | grep \"IPv4\")",
       "Bash(ipconfig 2>&1 | grep -i \"IPv4\")",
       "Bash(gh auth:*)",
-      "Bash(gh repo:*)"
+      "Bash(gh repo:*)",
+      "WebFetch(domain:chinese.sophia.beer)"
     ]
   }
 }

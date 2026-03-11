@@ -67,7 +67,7 @@ export default function QuizPage() {
         
         // 检查是否有未完成的进度
         if (user?.id) {
-          const { data: progress } = await getUnitProgress(user.id, stage, unit)
+          const progress = await getUnitProgress(user.id, stage, unit)
           if (progress && !progress.completed && progress.current_index > 0) {
             setSavedProgress({
               currentIndex: progress.current_index,

@@ -31,26 +31,24 @@ export default function StagePage() {
     if (!user?.id) return
 
     try {
-      const { data } = await getUserProgress(user.id)
-      if (data) {
-        const completed: number[] = []
-        let maxUnit = 0
-        
-        data
-          .filter(p => p.stage === stage)
-          .forEach(p => {
-            if (p.completed) {
-              completed.push(p.unit)
-            }
-            if (p.unit > maxUnit) {
-              maxUnit = p.unit
-            }
-          })
-        
-        setCompletedUnits(completed)
-        // 下一个可做的单元 = 已完成最大单元 + 1，至少为1
-        setCurrentUnit(Math.min(maxUnit + 1, stageInfo?.totalUnits || 1))
-      }
+      const data = await getUserProgress(user.id)
+      const completed: number[] = []
+      let maxUnit = 0
+
+      data
+        .filter(p => p.stage === stage)
+        .forEach(p => {
+          if (p.completed) {
+            completed.push(p.unit)
+          }
+          if (p.unit > maxUnit) {
+            maxUnit = p.unit
+          }
+        })
+
+      setCompletedUnits(completed)
+      // 下一个可做的单元 = 已完成最大单元 + 1，至少为1
+      setCurrentUnit(Math.min(maxUnit + 1, stageInfo?.totalUnits || 1))
     } catch (error) {
       console.error('加载进度失败:', error)
     } finally {

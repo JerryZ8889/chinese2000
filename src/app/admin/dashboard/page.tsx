@@ -31,10 +31,8 @@ export default function AdminDashboardPage() {
 
   const loadUsers = async () => {
     try {
-      const { data } = await getAllUsers()
-      if (data) {
-        setUsers(data)
-      }
+      const data = await getAllUsers()
+      setUsers(data)
     } catch (error) {
       console.error('加载用户失败:', error)
     } finally {

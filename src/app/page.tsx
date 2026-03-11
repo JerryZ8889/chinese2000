@@ -37,9 +37,9 @@ export default function LoginPage() {
 
     try {
       // 从数据库验证用户
-      const { data: user, error: dbError } = await getUserByUsername(trimmedUsername)
-      
-      if (dbError || !user) {
+      const user = await getUserByUsername(trimmedUsername)
+
+      if (!user) {
         setError('用户名不存在，请联系管理员添加')
         setIsLoading(false)
         return

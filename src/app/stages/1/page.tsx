@@ -26,18 +26,16 @@ export default function Stage1PartsPage() {
     if (!user?.id) return
 
     try {
-      const { data } = await getUserProgress(user.id)
-      if (data) {
-        const completed: number[] = []
-        data
-          .filter(p => p.stage === 1)
-          .forEach(p => {
-            if (p.completed) {
-              completed.push(p.unit)
-            }
-          })
-        setCompletedUnits(completed)
-      }
+      const data = await getUserProgress(user.id)
+      const completed: number[] = []
+      data
+        .filter(p => p.stage === 1)
+        .forEach(p => {
+          if (p.completed) {
+            completed.push(p.unit)
+          }
+        })
+      setCompletedUnits(completed)
     } catch (error) {
       console.error('加载进度失败:', error)
     } finally {

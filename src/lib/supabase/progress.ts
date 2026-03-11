@@ -1,20 +1,21 @@
 import { supabase } from './client'
 import { UnitProgress } from '@/types'
 
-export const getUserProgress = async (userId: string): Promise<{ data: UnitProgress[] | null; error: Error | null }> => {
+export const getUserProgress = async (userId: string): Promise<UnitProgress[]> => {
   const { data, error } = await supabase
     .from('unit_progress')
     .select('*')
     .eq('user_id', userId)
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data || []
 }
 
 export const getUnitProgress = async (
   userId: string,
   stage: number,
   unit: number
-): Promise<{ data: UnitProgress | null; error: Error | null }> => {
+): Promise<UnitProgress | null> => {
   const { data, error } = await supabase
     .from('unit_progress')
     .select('*')
@@ -22,20 +23,22 @@ export const getUnitProgress = async (
     .eq('stage', stage)
     .eq('unit', unit)
     .single()
-  
-  return { data, error: error as Error | null }
+
+  if (error && error.code !== 'PGRST116') throw error
+  return data
 }
 
 export const saveUnitProgress = async (
   progress: Omit<UnitProgress, 'id'>
-): Promise<{ data: UnitProgress | null; error: Error | null }> => {
+): Promise<UnitProgress> => {
   const { data, error } = await supabase
     .from('unit_progress')
     .upsert(progress, { onConflict: 'user_id,stage,unit' })
     .select()
     .single()
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data
 }
 
 export const updateUnitProgress = async (
@@ -43,7 +46,7 @@ export const updateUnitProgress = async (
   stage: number,
   unit: number,
   updates: Partial<UnitProgress>
-): Promise<{ data: UnitProgress | null; error: Error | null }> => {
+): Promise<UnitProgress> => {
   const { data, error } = await supabase
     .from('unit_progress')
     .update(updates)
@@ -52,21 +55,22 @@ export const updateUnitProgress = async (
     .eq('unit', unit)
     .select()
     .single()
-  
-  return { data, error: error as Error | null }
+
+  if (error) throw error
+  return data
 }
 
 export const getStageProgress = async (
   userId: string,
   stage: number
 ): Promise<{ completed: number; total: number }> => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('unit_progress')
     .select('completed')
     .eq('user_id', userId)
     .eq('stage', stage)
     .eq('completed', true)
-  
-  const completed = data?.length || 0
-  return { completed, total: 0 } // total 需要从字表数据获取
+
+  if (error) throw error
+  return { completed: data?.length || 0, total: 0 }
 }

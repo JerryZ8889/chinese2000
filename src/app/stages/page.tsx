@@ -34,16 +34,14 @@ export default function StagesPage() {
 
     try {
       // 加载进度
-      const { data } = await getUserProgress(user.id)
-      if (data) {
-        const progress: StageProgress = {1: 0, 2: 0, 3: 0, 4: 0}
-        data.forEach((p) => {
-          if (p.completed && p.stage >= 1 && p.stage <= 4) {
-            progress[p.stage]++
-          }
-        })
-        setStageProgress(progress)
-      }
+      const data = await getUserProgress(user.id)
+      const progress: StageProgress = {1: 0, 2: 0, 3: 0, 4: 0}
+      data.forEach((p) => {
+        if (p.completed && p.stage >= 1 && p.stage <= 4) {
+          progress[p.stage]++
+        }
+      })
+      setStageProgress(progress)
 
       // 加载学习统计
       const stats = await getStudyStats(user.id)
