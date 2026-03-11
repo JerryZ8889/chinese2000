@@ -47,8 +47,6 @@ npm install
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-ADMIN_PASSWORD=your-admin-password
 ```
 
 ### 4. 初始化数据库

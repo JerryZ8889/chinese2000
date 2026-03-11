@@ -159,11 +159,9 @@ CREATE INDEX idx_study_records_date ON study_records(study_date);
 
 #### 3.2.5 管理员配置表 (admin_config)
 
-```sql
-CREATE TABLE admin_config (
-  id INT PRIMARY KEY DEFAULT 1,
-  password_hash VARCHAR(255) NOT NULL  -- 存储密码的哈希值
-);
+```typescript
+// 管理密码直接硬编码在 src/app/admin/page.tsx
+const ADMIN_PASSWORD = 'admin'
 ```
 
 ### 3.3 数据文件结构
