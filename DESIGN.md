@@ -574,8 +574,10 @@ export const preloadVoices = () => {
 # .env.local
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # 仅服务端使用
-ADMIN_PASSWORD_HASH=your_password_hash  # 管理后台密码
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # 音频上传脚本使用
+ADMIN_PASSWORD=your_admin_password
+AZURE_TTS_KEY=your_azure_tts_key                 # 音频生成脚本使用
+AZURE_TTS_REGION=eastasia
 ```
 
 ### 9.2 部署步骤
@@ -592,11 +594,17 @@ ADMIN_PASSWORD_HASH=your_password_hash  # 管理后台密码
 
 2. **配置 Supabase**
    - 创建 Supabase 项目
-   - 执行数据库迁移脚本
-   - 配置 RLS 策略
+   - 执行数据库迁移脚本，配置 RLS 策略
+   - 创建 Storage Bucket `audio`（Public）
    - 获取 API 密钥
 
-3. **部署到 Vercel**
+3. **生成并上传音频**
+   ```bash
+   node scripts/generate-audio.mjs   # 生成 2000 个汉字 MP3
+   node scripts/upload-audio.mjs     # 上传到 Supabase Storage
+   ```
+
+4. **部署到 Vercel**
    - 连接 GitHub 仓库
    - 配置环境变量
    - 自动部署
@@ -611,12 +619,13 @@ ADMIN_PASSWORD_HASH=your_password_hash  # 管理后台密码
 - [x] 实现学习连续天数记录
 - [x] 支持错字专项练习
 - [x] 断点续练功能
+- [x] 成就徽章系统（15个徽章，自动检测解锁，弹窗庆祝）
+- [x] 高质量语音合成（Azure TTS 预生成，Supabase Storage 托管，Web Speech API 降级兜底）
+- [x] 出题排除同音干扰项（pinyin-pro 声调级别比对）
+- [x] 进入每题自动播放发音
 
 ### 10.2 待完成优化
 
-- [x] 添加成就徽章系统
-- [ ] 接入更高质量的语音合成服务
-- [ ] 支持自定义字表
 - [ ] 添加家长端小程序
 - [ ] 支持学习报告导出
 

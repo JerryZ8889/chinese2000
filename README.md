@@ -14,6 +14,8 @@
 - **学习统计**：连续学习天数、总学习天数统计
 - **成就徽章**：15个成就徽章，完成特定目标自动解锁，新徽章弹窗庆祝
 - **学习成就页**：整体学习报告 + 全部徽章展示（已解锁/未解锁）
+- **高质量语音**：Azure TTS 预生成音频（XiaoXiaoNeural），自动播放，Web Speech API 降级兜底
+- **同音排除**：出题时自动过滤与目标字同音的干扰项
 - **管理后台**：简单的用户管理，设置有效期
 
 ## 技术栈
@@ -51,7 +53,20 @@ NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-### 4. 初始化数据库
+### 4. 配置环境变量
+
+复制 `.env.local.example` 为 `.env.local`：
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ADMIN_PASSWORD=admin
+AZURE_TTS_KEY=your-azure-tts-key
+AZURE_TTS_REGION=eastasia
+```
+
+### 5. 初始化数据库
 
 在 Supabase SQL Editor 中执行以下脚本：
 
@@ -112,7 +127,16 @@ CREATE TABLE IF NOT EXISTS user_badges (
 );
 ```
 
-### 5. 启动开发服务器
+### 6. 生成并上传音频
+
+```bash
+node scripts/generate-audio.mjs   # 调用 Azure TTS 生成 2000 个 MP3
+node scripts/upload-audio.mjs     # 上传到 Supabase Storage (audio bucket)
+```
+
+> 需要先在 Supabase Storage 创建名为 `audio` 的 Public Bucket。
+
+### 7. 启动开发服务器
 
 ```bash
 npm run dev
