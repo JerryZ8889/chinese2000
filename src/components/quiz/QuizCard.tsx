@@ -59,6 +59,20 @@ export default function QuizCard({
       setSelectedChar(null)
       setIsCorrect(null)
       setShowFeedback(false)
+
+      // 自动播放发音，延迟 400ms 等待动画完成
+      setIsPlaying(true)
+      const timer = setTimeout(async () => {
+        try {
+          await speak(targetChar)
+        } catch (error) {
+          console.error('自动播放失败:', error)
+        } finally {
+          setIsPlaying(false)
+        }
+      }, 400)
+
+      return () => clearTimeout(timer)
     }
   }, [targetChar, allChars, prevTargetChar])
 
