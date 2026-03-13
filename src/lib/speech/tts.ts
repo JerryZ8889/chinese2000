@@ -6,17 +6,20 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const audioCache = new Map<string, HTMLAudioElement>()
 
 // 根据汉字获取 Supabase Storage 音频 URL
-const getAudioUrl = (char: string): string => {
-  const codePoint = char.codePointAt(0)!.toString(16)
-  return `${SUPABASE_URL}/storage/v1/object/public/audio/${codePoint}.mp3`
+const getAudioUrl = (char: string): string | null => {
+  const cp = char.codePointAt(0)
+  if (!cp) return null
+  return `${SUPABASE_URL}/storage/v1/object/public/audio/${cp.toString(16)}.mp3`
 }
 
 // 用预生成音频播放
 const speakWithAudio = (char: string): Promise<void> => {
   return new Promise((resolve, reject) => {
+    const url = getAudioUrl(char)
+    if (!url) { reject(new Error('无效字符')); return }
     let audio = audioCache.get(char)
     if (!audio) {
-      audio = new Audio(getAudioUrl(char))
+      audio = new Audio(url)
       audioCache.set(char, audio)
     } else {
       audio.currentTime = 0

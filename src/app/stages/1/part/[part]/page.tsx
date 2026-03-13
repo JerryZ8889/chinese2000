@@ -131,7 +131,7 @@ export default function Stage1PartPage() {
             {partInfo.name}
           </h1>
           <p className="text-sm text-gray-500">
-            单元 {partInfo.startUnit} - {partInfo.endUnit} · 已完成 {completedUnits.length} / {stageInfo?.totalUnits} 单元
+            单元 {partInfo.startUnit} - {partInfo.endUnit} · 已完成 {partCompletedUnits.length} / {partInfo.totalUnits} 单元
           </p>
         </div>
       </motion.header>
