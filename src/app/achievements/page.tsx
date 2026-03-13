@@ -7,7 +7,9 @@ import { ArrowLeft, Flame, Calendar, Trophy, BookOpen, Target } from 'lucide-rea
 import { useStore } from '@/store/useStore'
 import { getUserProgress } from '@/lib/supabase/progress'
 import { getStudyStats } from '@/lib/supabase/study-records'
-import { getUserBadges, UserBadge } from '@/lib/supabase/badges'
+import { getUserBadges, awardBadges, UserBadge } from '@/lib/supabase/badges'
+import { getUserWrongChars } from '@/lib/supabase/wrong-chars'
+import { computeNewBadges } from '@/lib/utils/badge-checker'
 import { BADGES } from '@/data/badges'
 
 export default function AchievementsPage() {
@@ -25,11 +27,25 @@ export default function AchievementsPage() {
   const loadData = useCallback(async () => {
     if (!user?.id) return
     try {
-      const [progress, studyStats, badges] = await Promise.all([
+      const [progress, studyStats, badges, wrongChars] = await Promise.all([
         getUserProgress(user.id),
         getStudyStats(user.id),
         getUserBadges(user.id),
+        getUserWrongChars(user.id),
       ])
+
+      // 兜底检测：进入成就页时补上所有遗漏的徽章
+      const newIds = computeNewBadges({
+        streak: studyStats.streak,
+        allProgress: progress,
+        wrongCharsCount: wrongChars.length,
+        earnedBadgeIds: badges.map(b => b.badge_id),
+      })
+      let finalBadges = badges
+      if (newIds.length > 0) {
+        await awardBadges(user.id, newIds)
+        finalBadges = await getUserBadges(user.id)
+      }
 
       const completed = progress.filter(p => p.completed)
       setCompletedUnits(completed.length)
@@ -39,7 +55,7 @@ export default function AchievementsPage() {
       setAvgAccuracy(totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0)
 
       setStats(studyStats)
-      setEarnedBadges(badges)
+      setEarnedBadges(finalBadges)
     } catch (error) {
       console.error('加载成就失败:', error)
     } finally {
