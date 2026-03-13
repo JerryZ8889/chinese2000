@@ -142,7 +142,7 @@ export default function AchievementsPage() {
         transition={{ delay: 0.2 }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800">成就徽章</h2>
+          <h2 className="text-lg font-bold text-gray-800">成就 · 徽章</h2>
           <span className="text-sm text-gray-400">
             {earnedBadges.length} / {BADGES.length} 已解锁
           </span>
@@ -161,7 +161,7 @@ export default function AchievementsPage() {
                   earned ? 'bg-white shadow-md' : 'bg-gray-100 opacity-40'
                 }`}
               >
-                <span className="text-3xl mb-2">{badge.emoji}</span>
+                <span className={`text-3xl mb-2 ${!earned ? 'grayscale' : ''}`}>{badge.emoji}</span>
                 <span className={`text-xs font-bold mb-1 leading-tight ${earned ? 'text-gray-800' : 'text-gray-500'}`}>
                   {badge.name}
                 </span>
