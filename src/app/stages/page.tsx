@@ -106,21 +106,23 @@ export default function StagesPage() {
             <h1 className="text-2xl font-bold text-gray-800">
               你好，{user?.username || '小朋友'}！
             </h1>
-            {recentBadges.length > 0 && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/achievements')}
-                className="flex items-center gap-0.5"
-                title="查看我的成就"
-              >
-                {recentBadges.map(b => (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/achievements')}
+              className="flex items-center gap-0.5"
+              title="查看我的成就"
+            >
+              {recentBadges.length > 0 ? (
+                recentBadges.map(b => (
                   <span key={b.badge_id} className="text-xl leading-none">
                     {getBadgeById(b.badge_id)?.emoji}
                   </span>
-                ))}
-              </motion.button>
-            )}
+                ))
+              ) : (
+                <span className="text-xl leading-none opacity-30">🏆</span>
+              )}
+            </motion.button>
           </div>
           <p className="text-gray-500">今天想学习哪个阶段呢？</p>
         </div>
