@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import SpeakerButton from './SpeakerButton'
 import CharButton from './CharButton'
@@ -34,47 +34,43 @@ export default function QuizCard({
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
-  
-  // 记录上一个 targetChar，用于判断是否需要重新生成选项
-  const [prevTargetChar, setPrevTargetChar] = useState<string | null>(null)
 
-  // 当 targetChar 变化时，重新生成选项
+  // 用 ref 记录上一个 targetChar，避免 state 更新触发重渲染干扰 timer
+  const prevTargetCharRef = useRef<string | null>(null)
+
+  // 当 targetChar 变化时，重新生成选项并自动播放
   useEffect(() => {
     preloadVoices()
     preloadSounds()
-    
-    // 只有当 targetChar 真正变化时才重新生成
-    if (targetChar !== prevTargetChar) {
-      setPrevTargetChar(targetChar)
-      
-      // 从当前单元的字中随机选择3个干扰字
-      const otherChars = allChars.filter(c => c !== targetChar)
-      // 如果字数不足4个，使用所有可用字
-      const distractorCount = Math.min(3, otherChars.length)
-      const distractors = shuffleArray(otherChars).slice(0, distractorCount)
-      const allOptions = shuffleArray([targetChar, ...distractors])
-      
-      setOptions(allOptions)
-      setIsAnswered(false)
-      setSelectedChar(null)
-      setIsCorrect(null)
-      setShowFeedback(false)
 
-      // 自动播放发音，延迟 400ms 等待动画完成
-      setIsPlaying(true)
-      const timer = setTimeout(async () => {
-        try {
-          await speak(targetChar)
-        } catch (error) {
-          console.error('自动播放失败:', error)
-        } finally {
-          setIsPlaying(false)
-        }
-      }, 400)
+    if (targetChar === prevTargetCharRef.current) return
+    prevTargetCharRef.current = targetChar
 
-      return () => clearTimeout(timer)
-    }
-  }, [targetChar, allChars, prevTargetChar])
+    const otherChars = allChars.filter(c => c !== targetChar)
+    const distractorCount = Math.min(3, otherChars.length)
+    const distractors = shuffleArray(otherChars).slice(0, distractorCount)
+    const allOptions = shuffleArray([targetChar, ...distractors])
+
+    setOptions(allOptions)
+    setIsAnswered(false)
+    setSelectedChar(null)
+    setIsCorrect(null)
+    setShowFeedback(false)
+
+    // 自动播放发音，延迟 400ms 等待动画完成
+    setIsPlaying(true)
+    const timer = setTimeout(async () => {
+      try {
+        await speak(targetChar)
+      } catch (error) {
+        console.error('自动播放失败:', error)
+      } finally {
+        setIsPlaying(false)
+      }
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [targetChar, allChars])
 
   const handleSpeak = async () => {
     setIsPlaying(true)
