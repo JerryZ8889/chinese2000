@@ -8,6 +8,10 @@ import FeedbackOverlay from './FeedbackOverlay'
 import { speak, preloadVoices } from '@/lib/speech/tts'
 import { shuffleArray } from '@/lib/utils/shuffle'
 import { playCorrectSound, playWrongSound, preloadSounds } from '@/lib/utils/sounds'
+import { pinyin } from 'pinyin-pro'
+
+const getCharPinyin = (char: string): string =>
+  pinyin(char, { toneType: 'num', type: 'array' })[0] || char
 
 interface QuizCardProps {
   targetChar: string
@@ -46,9 +50,18 @@ export default function QuizCard({
     if (targetChar === prevTargetCharRef.current) return
     prevTargetCharRef.current = targetChar
 
-    const otherChars = allChars.filter(c => c !== targetChar)
-    const distractorCount = Math.min(3, otherChars.length)
-    const distractors = shuffleArray(otherChars).slice(0, distractorCount)
+    // 生成干扰项：排除与目标字同音、以及互相同音的选项
+    const targetPinyin = getCharPinyin(targetChar)
+    const usedPinyins = new Set([targetPinyin])
+    const distractors: string[] = []
+    for (const c of shuffleArray(allChars.filter(c => c !== targetChar))) {
+      if (distractors.length >= 3) break
+      const py = getCharPinyin(c)
+      if (!usedPinyins.has(py)) {
+        distractors.push(c)
+        usedPinyins.add(py)
+      }
+    }
     const allOptions = shuffleArray([targetChar, ...distractors])
 
     setOptions(allOptions)
