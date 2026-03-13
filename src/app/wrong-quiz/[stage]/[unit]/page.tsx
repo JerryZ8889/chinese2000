@@ -6,9 +6,14 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import QuizCard from '@/components/quiz/QuizCard'
 import { useStore } from '@/store/useStore'
-import { getWrongCharsByStageUnit, deleteWrongChar } from '@/lib/supabase/wrong-chars'
+import { getWrongCharsByStageUnit, deleteWrongChar, getUserWrongChars } from '@/lib/supabase/wrong-chars'
 import { WrongChar, STAGES, getPartByUnit, StageData } from '@/types'
 import { shuffleArray } from '@/lib/utils/shuffle'
+import { getUserProgress } from '@/lib/supabase/progress'
+import { getStudyStats } from '@/lib/supabase/study-records'
+import { getUserBadges, awardBadges } from '@/lib/supabase/badges'
+import { computeNewBadges } from '@/lib/utils/badge-checker'
+import NewBadgeModal from '@/components/badges/NewBadgeModal'
 import stage1Data from '@/data/stage1.json'
 import stage2Data from '@/data/stage2.json'
 import stage3Data from '@/data/stage3.json'
@@ -35,6 +40,8 @@ export default function WrongCharQuizPage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [quizKey, setQuizKey] = useState(0) // 用于强制刷新 QuizCard
+  const [newBadgeIds, setNewBadgeIds] = useState<string[]>([])
+  const [showBadgeModal, setShowBadgeModal] = useState(false)
   
   // 记录当前题目是否已答对（用于下一题时从列表移除）
   const [currentAnswerCorrect, setCurrentAnswerCorrect] = useState(false)
@@ -180,6 +187,37 @@ export default function WrongCharQuizPage() {
     setCurrentAnswerCorrect(false)
   }, [currentAnswerCorrect, currentIndex, wrongChars, user?.id])
 
+  // 错字练习完成时检测新徽章
+  useEffect(() => {
+    if (!isComplete || !user?.id) return
+
+    const checkBadges = async () => {
+      try {
+        const [allProgress, studyStats, allWrongChars, earnedBadges] = await Promise.all([
+          getUserProgress(user.id),
+          getStudyStats(user.id),
+          getUserWrongChars(user.id),
+          getUserBadges(user.id),
+        ])
+        const newIds = computeNewBadges({
+          streak: studyStats.streak,
+          allProgress,
+          wrongCharsCount: allWrongChars.length,
+          earnedBadgeIds: earnedBadges.map(b => b.badge_id),
+        })
+        if (newIds.length > 0) {
+          await awardBadges(user.id, newIds)
+          setNewBadgeIds(newIds)
+          setShowBadgeModal(true)
+        }
+      } catch (error) {
+        console.error('徽章检测失败:', error)
+      }
+    }
+
+    checkBadges()
+  }, [isComplete, user?.id])
+
   const handleBack = () => {
     router.push('/wrong-book')
   }
@@ -223,6 +261,12 @@ export default function WrongCharQuizPage() {
 
     return (
       <main className="min-h-screen p-6 flex flex-col items-center justify-center">
+        {showBadgeModal && (
+          <NewBadgeModal
+            badgeIds={newBadgeIds}
+            onClose={() => setShowBadgeModal(false)}
+          />
+        )}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
