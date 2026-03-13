@@ -6,7 +6,12 @@ import { motion } from 'framer-motion'
 import { Star, RefreshCw, ArrowLeft, Home } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { getPartByUnit, STAGES } from '@/types'
-import { getUnitProgress } from '@/lib/supabase/progress'
+import { getUnitProgress, getUserProgress } from '@/lib/supabase/progress'
+import { getStudyStats } from '@/lib/supabase/study-records'
+import { getUserWrongChars } from '@/lib/supabase/wrong-chars'
+import { getUserBadges, awardBadges } from '@/lib/supabase/badges'
+import { computeNewBadges } from '@/lib/utils/badge-checker'
+import NewBadgeModal from '@/components/badges/NewBadgeModal'
 
 export default function ReportPage() {
   const router = useRouter()
@@ -21,6 +26,8 @@ export default function ReportPage() {
   const [total, setTotal] = useState(20)
   const [wrongChars, setWrongChars] = useState<string[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
+  const [newBadgeIds, setNewBadgeIds] = useState<string[]>([])
+  const [showBadgeModal, setShowBadgeModal] = useState(false)
 
   const accuracy = total > 0 ? Math.round((score / total) * 100) : 0
   const starCount = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0
@@ -41,11 +48,35 @@ export default function ReportPage() {
       }
 
       try {
+        // 加载本单元进度
         const data = await getUnitProgress(user.id, stage, unit)
-        if (data) {
-          setScore(data.score || 0)
-          setTotal(data.total || 20)
-          setWrongChars(data.wrong_chars || [])
+        const currentScore = data?.score || 0
+        const currentTotal = data?.total || 20
+        const currentWrongChars = data?.wrong_chars || []
+        setScore(currentScore)
+        setTotal(currentTotal)
+        setWrongChars(currentWrongChars)
+
+        // 并行加载徽章检测所需数据
+        const [allProgress, studyStats, allWrongChars, earnedBadges] = await Promise.all([
+          getUserProgress(user.id),
+          getStudyStats(user.id),
+          getUserWrongChars(user.id),
+          getUserBadges(user.id),
+        ])
+
+        // 计算本次新解锁的徽章
+        const newIds = computeNewBadges({
+          streak: studyStats.streak,
+          allProgress,
+          wrongCharsCount: allWrongChars.length,
+          earnedBadgeIds: earnedBadges.map(b => b.badge_id),
+        })
+
+        if (newIds.length > 0) {
+          await awardBadges(user.id, newIds)
+          setNewBadgeIds(newIds)
+          setShowBadgeModal(true)
         }
       } catch (error) {
         console.error('加载进度失败:', error)
@@ -94,6 +125,12 @@ export default function ReportPage() {
 
   return (
     <main className="min-h-screen p-6 flex flex-col items-center justify-center">
+      {showBadgeModal && (
+        <NewBadgeModal
+          badgeIds={newBadgeIds}
+          onClose={() => setShowBadgeModal(false)}
+        />
+      )}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

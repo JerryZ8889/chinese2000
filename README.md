@@ -12,6 +12,8 @@
 - **进度追踪**：记录每个单元的学习进度和得分
 - **错题本**：自动记录错字，支持针对性复习
 - **学习统计**：连续学习天数、总学习天数统计
+- **成就徽章**：15个成就徽章，完成特定目标自动解锁，新徽章弹窗庆祝
+- **学习成就页**：整体学习报告 + 全部徽章展示（已解锁/未解锁）
 - **管理后台**：简单的用户管理，设置有效期
 
 ## 技术栈
@@ -99,6 +101,15 @@ CREATE TABLE IF NOT EXISTS study_records (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, study_date)
 );
+
+-- 成就徽章表
+CREATE TABLE IF NOT EXISTS user_badges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  badge_id VARCHAR(50) NOT NULL,
+  earned_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, badge_id)
+);
 ```
 
 ### 5. 启动开发服务器
@@ -119,6 +130,7 @@ literacy-test/
 │   │   ├── stages/           # 阶段选择
 │   │   ├── quiz/             # 练习页面
 │   │   ├── report/           # 单元报告
+│   │   ├── achievements/     # 学习成就页（报告 + 徽章）
 │   │   ├── wrong-book/       # 错题本
 │   │   ├── wrong-quiz/       # 错题练习
 │   │   └── admin/            # 管理后台

@@ -9,6 +9,8 @@ import { useStore } from '@/store/useStore'
 import { STAGES } from '@/types'
 import { getUserProgress } from '@/lib/supabase/progress'
 import { getStudyStats } from '@/lib/supabase/study-records'
+import { getUserBadges, UserBadge } from '@/lib/supabase/badges'
+import { getBadgeById } from '@/data/badges'
 
 interface StageProgress {
   [key: number]: number
@@ -19,6 +21,7 @@ export default function StagesPage() {
   const { user, logout } = useStore()
   const [stageProgress, setStageProgress] = useState<StageProgress>({1: 0, 2: 0, 3: 0, 4: 0})
   const [studyStats, setStudyStats] = useState({ streak: 0, totalDays: 0, totalUnits: 0 })
+  const [recentBadges, setRecentBadges] = useState<UserBadge[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -33,8 +36,13 @@ export default function StagesPage() {
     }
 
     try {
-      // 加载进度
-      const data = await getUserProgress(user.id)
+      // 并行加载进度、统计、徽章
+      const [data, stats, badges] = await Promise.all([
+        getUserProgress(user.id),
+        getStudyStats(user.id),
+        getUserBadges(user.id),
+      ])
+
       const progress: StageProgress = {1: 0, 2: 0, 3: 0, 4: 0}
       data.forEach((p) => {
         if (p.completed && p.stage >= 1 && p.stage <= 4) {
@@ -42,10 +50,8 @@ export default function StagesPage() {
         }
       })
       setStageProgress(progress)
-
-      // 加载学习统计
-      const stats = await getStudyStats(user.id)
       setStudyStats(stats)
+      setRecentBadges(badges.slice(0, 3))
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
@@ -96,9 +102,26 @@ export default function StagesPage() {
         className="flex items-center justify-between mb-6"
       >
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            你好，{user?.username || '小朋友'}！
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-800">
+              你好，{user?.username || '小朋友'}！
+            </h1>
+            {recentBadges.length > 0 && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/achievements')}
+                className="flex items-center gap-0.5"
+                title="查看我的成就"
+              >
+                {recentBadges.map(b => (
+                  <span key={b.badge_id} className="text-xl leading-none">
+                    {getBadgeById(b.badge_id)?.emoji}
+                  </span>
+                ))}
+              </motion.button>
+            )}
+          </div>
           <p className="text-gray-500">今天想学习哪个阶段呢？</p>
         </div>
         <motion.button

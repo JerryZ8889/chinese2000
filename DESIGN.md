@@ -39,6 +39,8 @@
 | **单元报告** | 完成一个单元后显示得分、正确率、错字列表 | ✅ 已完成 |
 | **错题本** | 按单元分组展示所有错字，支持错题练习 | ✅ 已完成 |
 | **学习统计** | 连续学习天数、总学习天数、完成单元数统计 | ✅ 已完成 |
+| **成就徽章** | 15个成就徽章，自动检测解锁，新徽章弹窗庆祝 | 🚧 开发中 |
+| **学习成就页** | `/achievements` 页面：整体学习报告 + 全部徽章展示 | 🚧 开发中 |
 
 ### 2.2 管理端功能
 
@@ -157,7 +159,41 @@ CREATE INDEX idx_study_records_user ON study_records(user_id);
 CREATE INDEX idx_study_records_date ON study_records(study_date);
 ```
 
-#### 3.2.5 管理员配置表 (admin_config)
+#### 3.2.5 成就徽章表 (user_badges)
+
+```sql
+CREATE TABLE user_badges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  badge_id VARCHAR(50) NOT NULL,   -- 徽章标识符，如 'streak_7'
+  earned_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, badge_id)        -- 每个徽章每人只能解锁一次
+);
+```
+
+徽章定义（名称、emoji、解锁条件）存储在前端代码 `src/data/badges.ts` 中，数据库只记录解锁事件。
+
+**徽章清单（共 15 个）**：
+
+| badge_id | 名称 | emoji | 解锁条件 |
+|----------|------|-------|----------|
+| `first_unit` | 初出茅庐 | 🌱 | 完成第1个单元 |
+| `streak_3` | 学习小达人 | 🔥 | 连续学习3天 |
+| `streak_7` | 一周不间断 | 💪 | 连续学习7天 |
+| `streak_30` | 月度冠军 | 🏆 | 连续学习30天 |
+| `units_10` | 小小学者 | ⭐ | 完成10个单元 |
+| `units_30` | 学习达人 | 🚀 | 完成30个单元 |
+| `units_50` | 半壁江山 | 🌈 | 完成50个单元 |
+| `units_80` | 识字大王 | 👑 | 完成80个单元 |
+| `stage_1` | 一阶通关 | 🎓 | 第一阶段60单元全完成 |
+| `stage_2` | 二阶通关 | 📚 | 第二阶段15单元全完成 |
+| `stage_3` | 三阶通关 | 🌟 | 第三阶段15单元全完成 |
+| `stage_4` | 汉字小达人 | 🦁 | 第四阶段10单元全完成 |
+| `perfect_score` | 完美发挥 | 💯 | 单元满分（20/20） |
+| `perfect_3` | 三连满分 | 🎯 | 连续3个单元满分 |
+| `zero_wrong` | 知错能改 | 🧹 | 错字本清零（错字数为0） |
+
+#### 3.2.6 管理员配置表 (admin_config)
 
 ```typescript
 // 管理密码直接硬编码在 src/app/admin/page.tsx
@@ -268,7 +304,9 @@ literacy-test/
 │   │   │       └── page.tsx          # 错题练习页面
 │   │   ├── report/
 │   │   │   └── [stage]/[unit]/
-│   │   │       └── page.tsx          # 单元报告页
+│   │   │       └── page.tsx          # 单元报告页（含新徽章检测弹窗）
+│   │   ├── achievements/
+│   │   │   └── page.tsx              # 学习成就页（整体报告 + 徽章墙）
 │   │   ├── wrong-book/
 │   │   │   └── page.tsx              # 错题本页
 │   │   └── admin/
@@ -291,13 +329,16 @@ literacy-test/
 │   │   │   ├── users.ts              # 用户操作
 │   │   │   ├── progress.ts           # 进度操作
 │   │   │   ├── wrong-chars.ts        # 错字操作
-│   │   │   └── study-records.ts      # 学习记录操作
+│   │   │   ├── study-records.ts      # 学习记录操作
+│   │   │   └── badges.ts             # 成就徽章操作
 │   │   ├── speech/
 │   │   │   └── tts.ts                # Web Speech API 封装
 │   │   └── utils/
 │   │       ├── shuffle.ts            # 随机打乱算法
-│   │       └── sounds.ts             # 音效工具
+│   │       ├── sounds.ts             # 音效工具
+│   │       └── badge-checker.ts      # 徽章解锁条件计算
 │   ├── data/
+│   │   ├── badges.ts                 # 徽章静态定义（15个）
 │   │   ├── stage1.json               # 第一阶段字表
 │   │   ├── stage2.json
 │   │   ├── stage3.json
@@ -353,7 +394,15 @@ literacy-test/
 - 底部：下一题按钮
 - 反馈：答对撒花动画 + 音效、答错高亮正确答案 + 音效
 
-#### 5.2.5 单元报告页
+#### 5.2.5 学习成就页（/achievements）
+
+入口：stages 页"你好 xxx"右侧的已解锁徽章图标（最多展示最近3个），点击进入。
+
+页面内容：
+- **上半段 - 整体学习报告**：总学习天数、连续学习天数、完成单元数、总字数、平均正确率
+- **下半段 - 徽章墙**：全部 15 个徽章，已解锁彩色展示，未解锁灰色半透明；已解锁徽章显示解锁日期
+
+#### 5.2.6 单元报告页
 - 恭喜完成动画
 - 得分和正确率
 - 需要复习的字列表
@@ -414,6 +463,23 @@ flowchart TD
     T --> G
     R -->|是| U[记录学习统计]
     U --> V[跳转到单元报告页]
+    V --> W[检测新解锁徽章]
+    W --> X{有新徽章?}
+    X -->|是| Y[显示新徽章弹窗庆祝]
+    X -->|否| Z[正常展示报告]
+```
+
+### 6.4 徽章检测流程
+
+```
+单元完成 → report 页加载
+  → getStudyStats()        获取连续天数、总天数
+  → getUserProgress()      获取所有单元完成情况
+  → getUserWrongChars()    获取错字数量
+  → getUserBadges()        获取已解锁徽章列表
+  → computeNewBadges()     计算本次新解锁的徽章
+  → awardBadges()          写入 user_badges 表
+  → 显示弹窗（逐个展示新徽章）
 ```
 
 ### 6.3 数据同步策略
@@ -548,7 +614,7 @@ ADMIN_PASSWORD_HASH=your_password_hash  # 管理后台密码
 
 ### 10.2 待完成优化
 
-- [ ] 添加成就徽章系统
+- [x] 添加成就徽章系统
 - [ ] 接入更高质量的语音合成服务
 - [ ] 支持自定义字表
 - [ ] 添加家长端小程序
