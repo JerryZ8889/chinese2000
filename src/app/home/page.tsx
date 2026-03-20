@@ -10,6 +10,7 @@ import { getUserBadges, UserBadge } from '@/lib/supabase/badges'
 import { getUserWrongChars } from '@/lib/supabase/wrong-chars'
 import { getUserProgress } from '@/lib/supabase/progress'
 import { getBadgeById } from '@/data/badges'
+import { unlockAudio } from '@/lib/utils/audio-unlock'
 import { STAGES, UnitProgress } from '@/types'
 import camelaData from '@/data/camela.json'
 
@@ -274,7 +275,7 @@ export default function HomePage() {
           transition={{ delay: 0.08 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => router.push(continueTarget.href)}
+          onClick={() => { unlockAudio(); router.push(continueTarget.href) }}
           className={`w-full p-4 mb-4 bg-gradient-to-r ${continueTarget.gradient} rounded-2xl shadow-sm flex items-center gap-3 text-white`}
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">

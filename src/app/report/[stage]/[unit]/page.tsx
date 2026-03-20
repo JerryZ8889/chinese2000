@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Star, RefreshCw, ArrowLeft, Home } from 'lucide-react'
+import { unlockAudio } from '@/lib/utils/audio-unlock'
 import { useStore } from '@/store/useStore'
 import { getPartByUnit, STAGES } from '@/types'
 import { getUnitProgress, getUserProgress } from '@/lib/supabase/progress'
@@ -89,6 +90,7 @@ export default function ReportPage() {
   }, [isHydrated, user, stage, unit, router])
 
   const handleRetry = () => {
+    unlockAudio()
     router.push(`/quiz/${stage}/${unit}`)
   }
 

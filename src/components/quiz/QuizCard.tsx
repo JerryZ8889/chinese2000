@@ -16,8 +16,7 @@ const getCharPinyin = (char: string): string =>
 const getCharPinyinWithTone = (char: string): string =>
   pinyin(char, { toneType: 'symbol', type: 'array' })[0] || char
 
-// 模块级标志：用户是否已在当前页面产生过交互（解锁音频权限）
-let audioUnlocked = false
+import { isAudioUnlocked, unlockAudio } from '@/lib/utils/audio-unlock'
 
 interface QuizCardProps {
   targetChar: string
@@ -73,9 +72,8 @@ export default function QuizCard({
     setIsCorrect(null)
     setShowFeedback(false)
 
-    // 第一题：用户还没交互过，浏览器会拦截自动播放 → 不播放，用动画引导点击
-    // 后续题：用户已交互，正常自动播放
-    if (!audioUnlocked) {
+    // 如果音频未解锁（直接 URL 访问等极端情况），不尝试自动播放
+    if (!isAudioUnlocked()) {
       setIsPlaying(false)
       return
     }
@@ -100,7 +98,7 @@ export default function QuizCard({
   }, [targetChar, allChars])
 
   const handleSpeak = async () => {
-    audioUnlocked = true
+    unlockAudio()
     setIsPlaying(true)
     try {
       await playChar(targetChar)
@@ -113,7 +111,7 @@ export default function QuizCard({
 
   const handleCharClick = (char: string) => {
     if (isAnswered) return
-    audioUnlocked = true
+    unlockAudio()
 
     setIsAnswered(true)
     setSelectedChar(char)
@@ -159,9 +157,9 @@ export default function QuizCard({
         className="flex flex-col items-center mb-10"
       >
         <p className="text-gray-500 text-sm mb-3">
-          {!audioUnlocked ? '点击按钮开始听发音' : '点击按钮听发音'}
+          {!isAudioUnlocked() ? '点击按钮开始听发音' : '点击按钮听发音'}
         </p>
-        <SpeakerButton onClick={handleSpeak} isPlaying={isPlaying} showHint={!audioUnlocked && !isPlaying} />
+        <SpeakerButton onClick={handleSpeak} isPlaying={isPlaying} showHint={!isAudioUnlocked() && !isPlaying} />
       </motion.div>
 
       {/* 汉字选项 - 一排四个 */}

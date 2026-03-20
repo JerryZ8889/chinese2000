@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Star, RefreshCw, ArrowLeft, Home } from 'lucide-react'
+import { unlockAudio } from '@/lib/utils/audio-unlock'
 import { useStore } from '@/store/useStore'
 import { getUnitProgress } from '@/lib/supabase/progress'
 import camelaData from '@/data/camela.json'
@@ -94,7 +95,7 @@ export default function CamelaReportPage() {
             <ArrowLeft className="w-5 h-5" />返回单元列表
           </motion.button>
           {wrongChars.length > 0 && (
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => router.push(`/camela/quiz/${stage}/${unit}`)} className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white font-bold rounded-2xl">
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { unlockAudio(); router.push(`/camela/quiz/${stage}/${unit}`) }} className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white font-bold rounded-2xl">
               <RefreshCw className="w-5 h-5" />再练一次
             </motion.button>
           )}

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Star, Play } from 'lucide-react'
+import { unlockAudio } from '@/lib/utils/audio-unlock'
 
 interface UnitScore {
   score: number
@@ -60,7 +61,7 @@ export default function UnitGrid({
             transition={{ delay: index * 0.02 }}
             whileHover={!isLocked ? { scale: 1.1 } : {}}
             whileTap={!isLocked ? { scale: 0.9 } : {}}
-            onClick={() => !isLocked && onUnitClick(unit)}
+            onClick={() => { if (!isLocked) { unlockAudio(); onUnitClick(unit) } }}
             disabled={isLocked}
             className={`
               aspect-square rounded-2xl flex items-center justify-center
