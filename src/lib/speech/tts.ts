@@ -19,7 +19,7 @@ const getCamelaAudioUrl = (char: string): string | null => {
   return `${SUPABASE_URL}/storage/v1/object/public/camela-audio/${cp.toString(16)}.mp3`
 }
 
-// 用预生成音频播放
+// 用预生成音频播放（带 settled 防止双重回调）
 const speakWithAudio = (char: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const url = getAudioUrl(char)
@@ -32,13 +32,17 @@ const speakWithAudio = (char: string): Promise<void> => {
       audio.currentTime = 0
     }
 
-    audio.onended = () => resolve()
-    audio.onerror = () => reject(new Error('音频加载失败'))
-    audio.play().catch(reject)
+    let settled = false
+    const done = () => { if (!settled) { settled = true; resolve() } }
+    const fail = (e: unknown) => { if (!settled) { settled = true; reject(e) } }
+
+    audio.onended = done
+    audio.onerror = () => fail(new Error('音频加载失败'))
+    audio.play().catch(fail)
   })
 }
 
-// 降级：Web Speech API
+// 降级：Web Speech API（带 5s 超时，防止 promise 永久挂死）
 const speakWithWebSpeech = (text: string): Promise<void> => {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) { resolve(); return }
@@ -55,13 +59,15 @@ const speakWithWebSpeech = (text: string): Promise<void> => {
                          voices.find(v => v.lang.startsWith('zh')) || null
     if (chineseVoice) utterance.voice = chineseVoice
 
-    utterance.onend = () => resolve()
-    utterance.onerror = () => resolve()
+    const timeout = setTimeout(resolve, 5000)
+    utterance.onend = () => { clearTimeout(timeout); resolve() }
+    utterance.onerror = () => { clearTimeout(timeout); resolve() }
 
     try {
       speechSynthesis.speak(utterance)
       if (speechSynthesis.paused) speechSynthesis.resume()
     } catch {
+      clearTimeout(timeout)
       resolve()
     }
   })
@@ -112,9 +118,14 @@ export const speakCamela = async (char: string): Promise<void> => {
         } else {
           audio.currentTime = 0
         }
-        audio.onended = () => resolve()
-        audio.onerror = () => reject(new Error('音频加载失败'))
-        audio.play().catch(reject)
+
+        let settled = false
+        const done = () => { if (!settled) { settled = true; resolve() } }
+        const fail = (e: unknown) => { if (!settled) { settled = true; reject(e) } }
+
+        audio.onended = done
+        audio.onerror = () => fail(new Error('音频加载失败'))
+        audio.play().catch(fail)
       })
       return
     } catch {
