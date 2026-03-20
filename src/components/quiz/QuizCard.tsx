@@ -70,19 +70,22 @@ export default function QuizCard({
     setIsCorrect(null)
     setShowFeedback(false)
 
-    // 自动播放发音，延迟 400ms 等待动画完成
+    // 自动播放发音，延迟 400ms 等动画完成；2s 超时防止 autoplay 被拦截后卡住
     setIsPlaying(true)
+    let cancelled = false
     const timer = setTimeout(async () => {
       try {
-        await playChar(targetChar)
-      } catch (error) {
-        console.error('自动播放失败:', error)
+        const raceTimeout = new Promise<void>(r => setTimeout(r, 2000))
+        await Promise.race([playChar(targetChar), raceTimeout])
+      } catch {
+        // autoplay blocked, ignore
       } finally {
-        setIsPlaying(false)
+        if (!cancelled) setIsPlaying(false)
       }
     }, 400)
 
     return () => {
+      cancelled = true
       clearTimeout(timer)
       setIsPlaying(false)
     }
