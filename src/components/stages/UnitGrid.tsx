@@ -3,25 +3,37 @@
 import { motion } from 'framer-motion'
 import { Star, Play } from 'lucide-react'
 
+interface UnitScore {
+  score: number
+  total: number
+}
+
 interface UnitGridProps {
   totalUnits: number
   completedUnits: number[]
+  unitScores?: Map<number, UnitScore>  // unit number → score/total
   currentUnit: number
-  startUnit?: number  // 起始单元号，默认为1
+  startUnit?: number
   onUnitClick: (unit: number) => void
 }
 
-export default function UnitGrid({ 
-  totalUnits, 
-  completedUnits, 
-  currentUnit, 
+const getStarCount = (score: number, total: number) => {
+  if (total === 0) return 1
+  const pct = (score / total) * 100
+  return pct >= 90 ? 3 : pct >= 50 ? 2 : 1
+}
+
+export default function UnitGrid({
+  totalUnits,
+  completedUnits,
+  unitScores,
+  currentUnit,
   startUnit = 1,
-  onUnitClick 
+  onUnitClick
 }: UnitGridProps) {
   const units = Array.from({ length: totalUnits }, (_, i) => i + 1)
 
   const getUnitStatus = (unit: number): 'completed' | 'current' | 'locked' => {
-    // 将局部单元号转换为全局单元号进行比较
     const globalUnit = startUnit + unit - 1
     if (completedUnits.includes(globalUnit)) return 'completed'
     if (unit <= currentUnit) return 'current'
@@ -35,7 +47,10 @@ export default function UnitGrid({
         const isCompleted = status === 'completed'
         const isCurrent = status === 'current'
         const isLocked = status === 'locked'
-        const displayUnit = startUnit + unit - 1  // 显示的单元号
+        const displayUnit = startUnit + unit - 1
+        const globalUnit = startUnit + unit - 1
+        const scoreData = unitScores?.get(globalUnit)
+        const stars = scoreData ? getStarCount(scoreData.score, scoreData.total) : 1
 
         return (
           <motion.button
@@ -60,8 +75,12 @@ export default function UnitGrid({
           >
             {isCompleted ? (
               <div className="flex flex-col items-center">
-                <span>{displayUnit}</span>
-                <Star className="w-3 h-3 mt-0.5 fill-white" />
+                <span className="text-sm">{displayUnit}</span>
+                <div className="flex gap-px mt-0.5">
+                  {Array.from({ length: stars }).map((_, i) => (
+                    <Star key={i} className="w-2.5 h-2.5 fill-white text-white" />
+                  ))}
+                </div>
               </div>
             ) : isCurrent ? (
               <div className="flex flex-col items-center">

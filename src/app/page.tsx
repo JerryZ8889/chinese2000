@@ -55,7 +55,7 @@ export default function LoginPage() {
       // 存储用户信息到 Zustand
       setUser(user)
       
-      router.push('/stages')
+      router.push('/home')
     } catch (err) {
       console.error('登录失败:', err)
       setError('登录失败，请重试')

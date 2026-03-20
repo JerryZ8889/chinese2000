@@ -7,7 +7,7 @@ import { ArrowLeft, ChevronDown, ChevronRight, Volume2, Play } from 'lucide-reac
 import { useStore } from '@/store/useStore'
 import { getUserWrongChars } from '@/lib/supabase/wrong-chars'
 import { WrongChar } from '@/types'
-import { speak } from '@/lib/speech/tts'
+import { speak, speakCamela } from '@/lib/speech/tts'
 
 interface GroupedWrongChars {
   [key: string]: { chars: WrongChar[], stage: number, unit: number }
@@ -54,8 +54,13 @@ export default function WrongBookPage() {
   }
 
   // 按阶段和单元分组，并保存 stage 和 unit 信息
+  const getGroupLabel = (stage: number, unit: number) =>
+    stage >= 11 && stage <= 17
+      ? `卡梅拉 阶段${stage - 10} - 单元${unit}`
+      : `基础练习 阶段${stage} - 单元${unit}`
+
   const groupedChars: GroupedWrongChars = wrongChars.reduce((acc, char) => {
-    const key = `阶段${char.stage} - 单元${char.unit}`
+    const key = getGroupLabel(char.stage, char.unit)
     if (!acc[key]) {
       acc[key] = { chars: [], stage: char.stage, unit: char.unit }
     }
@@ -77,10 +82,11 @@ export default function WrongBookPage() {
 
   const totalWrongChars = wrongChars.length
 
-  // 点击错字发音
-  const handleCharClick = useCallback(async (char: string) => {
+  // 点击错字发音（卡梅拉用 speakCamela，其他用 speak）
+  const handleCharClick = useCallback(async (char: string, stage: number) => {
     try {
-      await speak(char)
+      if (stage >= 11 && stage <= 17) await speakCamela(char)
+      else await speak(char)
     } catch (error) {
       console.error('发音失败:', error)
     }
@@ -110,7 +116,7 @@ export default function WrongBookPage() {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => router.push('/stages')}
+          onClick={() => router.push('/home')}
           className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200"
         >
           <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -195,7 +201,7 @@ export default function WrongBookPage() {
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ delay: i * 0.05 }}
-                          onClick={() => handleCharClick(char.char)}
+                          onClick={() => handleCharClick(char.char, char.stage)}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="flex flex-col items-center p-3 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition-colors"

@@ -16,6 +16,7 @@ export default function StagePage() {
   const { user } = useStore()
   
   const [completedUnits, setCompletedUnits] = useState<number[]>([])
+  const [unitScores, setUnitScores] = useState<Map<number, { score: number; total: number }>>(new Map())
   const [currentUnit, setCurrentUnit] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -33,6 +34,7 @@ export default function StagePage() {
     try {
       const data = await getUserProgress(user.id)
       const completed: number[] = []
+      const scores = new Map<number, { score: number; total: number }>()
       let maxUnit = 0
 
       data
@@ -40,6 +42,7 @@ export default function StagePage() {
         .forEach(p => {
           if (p.completed) {
             completed.push(p.unit)
+            scores.set(p.unit, { score: p.score, total: p.total })
           }
           if (p.unit > maxUnit) {
             maxUnit = p.unit
@@ -47,6 +50,7 @@ export default function StagePage() {
         })
 
       setCompletedUnits(completed)
+      setUnitScores(scores)
       // 下一个可做的单元 = 已完成最大单元 + 1，至少为1
       setCurrentUnit(Math.min(maxUnit + 1, stageInfo?.totalUnits || 1))
     } catch (error) {
@@ -110,7 +114,7 @@ export default function StagePage() {
         
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-800">
-            第{stage}阶段：{stageInfo.name}
+            阶段{stage}：{stageInfo.name}
           </h1>
           <p className="text-sm text-gray-500">
             已完成 {completedUnits.length} / {stageInfo.totalUnits} 单元
@@ -142,6 +146,7 @@ export default function StagePage() {
         <UnitGrid
           totalUnits={stageInfo.totalUnits}
           completedUnits={completedUnits}
+          unitScores={unitScores}
           currentUnit={currentUnit}
           onUnitClick={handleUnitClick}
         />

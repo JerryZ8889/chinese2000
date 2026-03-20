@@ -16,11 +16,22 @@ export const computeNewBadges = ({
   const completed = allProgress.filter(p => p.completed)
   const totalCompleted = completed.length
 
-  // 各阶段完成单元数
+  // 各阶段完成单元数（基础练习 1-4）
   const byStage: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 }
   completed.forEach(p => {
     if (p.stage >= 1 && p.stage <= 4) byStage[p.stage]++
   })
+
+  // 卡梅拉各阶段完成单元数（DB stage 11-17 → camela stage 1-7）
+  const camelaByStage: Record<number, number> = {}
+  const camelaUnitsPerStage = [15, 15, 15, 15, 15, 15, 14] // 7 stages
+  completed.forEach(p => {
+    if (p.stage >= 11 && p.stage <= 17) {
+      const cs = p.stage - 10
+      camelaByStage[cs] = (camelaByStage[cs] || 0) + 1
+    }
+  })
+  const camelaAllDone = camelaUnitsPerStage.every((need, i) => (camelaByStage[i + 1] || 0) >= need)
 
   // 最近 3 个完成的单元（按完成时间降序）
   const sortedCompleted = [...completed].sort((a, b) => {
@@ -50,6 +61,8 @@ export const computeNewBadges = ({
     perfect_score: completed.some(p => p.total > 0 && p.score === p.total),
     perfect_3:     isPerfect3,
     zero_wrong:    wrongCharsCount === 0 && totalCompleted > 0,
+    camela_1:      (camelaByStage[1] || 0) >= camelaUnitsPerStage[0],
+    camela_all:    camelaAllDone,
   }
 
   const earnedSet = new Set(earnedBadgeIds)

@@ -103,6 +103,26 @@ export const getStreakDays = async (
   }
 }
 
+// 获取最近 N 天的学习日期集合
+export const getRecentStudyDates = async (
+  userId: string,
+  days: number = 7
+): Promise<Set<string>> => {
+  const today = new Date()
+  const start = new Date(today)
+  start.setDate(start.getDate() - days + 1)
+  const startStr = start.toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('study_records')
+    .select('study_date')
+    .eq('user_id', userId)
+    .gte('study_date', startStr)
+
+  if (error) throw error
+  return new Set((data || []).map(r => r.study_date))
+}
+
 // 获取学习统计数据
 export const getStudyStats = async (
   userId: string

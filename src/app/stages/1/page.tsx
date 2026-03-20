@@ -96,7 +96,7 @@ export default function Stage1PartsPage() {
 
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-800">
-            第一阶段：{stageInfo.name}
+            阶段1：{stageInfo.name}
           </h1>
           <p className="text-sm text-gray-500">
             共 {stageInfo.totalChars} 字，{stageInfo.totalUnits} 单元

@@ -94,12 +94,12 @@ export default function AchievementsPage() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => router.push('/stages')}
+          onClick={() => router.push('/home')}
           className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </motion.button>
-        <h1 className="text-2xl font-bold text-gray-800">我的成就</h1>
+        <h1 className="text-2xl font-bold text-gray-800">我的徽章</h1>
       </motion.header>
 
       {/* 学习报告 */}

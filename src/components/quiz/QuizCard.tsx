@@ -1,17 +1,20 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import SpeakerButton from './SpeakerButton'
 import CharButton from './CharButton'
 import FeedbackOverlay from './FeedbackOverlay'
-import { speak, preloadVoices } from '@/lib/speech/tts'
+import { speak, speakCamela, preloadVoices } from '@/lib/speech/tts'
 import { shuffleArray } from '@/lib/utils/shuffle'
 import { playCorrectSound, playWrongSound, preloadSounds } from '@/lib/utils/sounds'
 import { pinyin } from 'pinyin-pro'
 
 const getCharPinyin = (char: string): string =>
   pinyin(char, { toneType: 'num', type: 'array' })[0] || char
+
+const getCharPinyinWithTone = (char: string): string =>
+  pinyin(char, { toneType: 'symbol', type: 'array' })[0] || char
 
 interface QuizCardProps {
   targetChar: string
@@ -21,6 +24,7 @@ interface QuizCardProps {
   onNext: () => void
   currentIndex: number
   total: number
+  useCamelaAudio?: boolean
 }
 
 export default function QuizCard({
@@ -30,8 +34,10 @@ export default function QuizCard({
   onWrong,
   onNext,
   currentIndex,
-  total
+  total,
+  useCamelaAudio = false,
 }: QuizCardProps) {
+  const playChar = useCamelaAudio ? speakCamela : speak
   const [options, setOptions] = useState<string[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [isAnswered, setIsAnswered] = useState(false)
@@ -39,16 +45,10 @@ export default function QuizCard({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
 
-  // 用 ref 记录上一个 targetChar，避免 state 更新触发重渲染干扰 timer
-  const prevTargetCharRef = useRef<string | null>(null)
-
   // 当 targetChar 变化时，重新生成选项并自动播放
   useEffect(() => {
     preloadVoices()
     preloadSounds()
-
-    if (targetChar === prevTargetCharRef.current) return
-    prevTargetCharRef.current = targetChar
 
     // 生成干扰项：排除与目标字同音、以及互相同音的选项
     const targetPinyin = getCharPinyin(targetChar)
@@ -74,7 +74,7 @@ export default function QuizCard({
     setIsPlaying(true)
     const timer = setTimeout(async () => {
       try {
-        await speak(targetChar)
+        await playChar(targetChar)
       } catch (error) {
         console.error('自动播放失败:', error)
       } finally {
@@ -82,13 +82,16 @@ export default function QuizCard({
       }
     }, 400)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      setIsPlaying(false)
+    }
   }, [targetChar, allChars])
 
   const handleSpeak = async () => {
     setIsPlaying(true)
     try {
-      await speak(targetChar)
+      await playChar(targetChar)
     } catch (error) {
       console.error('语音播放失败:', error)
     } finally {
@@ -167,8 +170,21 @@ export default function QuizCard({
         ))}
       </div>
 
-      {/* Next 按钮 - 固定高度避免布局跳动 */}
-      <div className="h-14 flex items-center justify-center">
+      {/* 答题后显示拼音 */}
+      <div className="h-8 flex items-center justify-center">
+        {isAnswered && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-gray-500 text-sm"
+          >
+            {targetChar} = <span className="font-bold text-primary-coral">{getCharPinyinWithTone(targetChar)}</span>
+          </motion.p>
+        )}
+      </div>
+
+      {/* Next 按钮 */}
+      <div className="h-14 flex items-center justify-center mt-1">
         {isAnswered && (
           <motion.button
             initial={{ opacity: 0, scale: 0.9 }}

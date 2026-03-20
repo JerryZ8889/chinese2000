@@ -34,3 +34,16 @@ next-env.d.ts
 
 # 音频生成临时目录
 /audio_output
+/public/audio/camela
+
+# 日语子项目（独立仓库）
+/Japanese
+
+# 卡梅拉源文档
+/不一样的卡梅拉
+
+# 学习计划文档
+/1 学习计划
+
+# Claude 配置
+.claude/

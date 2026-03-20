@@ -18,6 +18,7 @@ import stage1Data from '@/data/stage1.json'
 import stage2Data from '@/data/stage2.json'
 import stage3Data from '@/data/stage3.json'
 import stage4Data from '@/data/stage4.json'
+import camelaData from '@/data/camela.json'
 
 const stageDataMap: Record<number, StageData> = {
   1: stage1Data,
@@ -91,13 +92,18 @@ export default function WrongCharQuizPage() {
       .map(w => w.char)
   }, [wrongChars, currentWrongChar?.char])
   
-  // 从同等级字表中获取所有字
+  // 从同等级字表中获取所有字（卡梅拉 stage 11-17 使用 camela 数据）
+  const isCamela = stage >= 11 && stage <= 17
   const stageAllChars = useMemo(() => {
+    if (isCamela) {
+      const camelaStage = stage - 10
+      const sd = camelaData.stages.find(s => s.stage === camelaStage)
+      return sd ? sd.units.flatMap(u => u.chars) : camelaData.stages.flatMap(s => s.units.flatMap(u => u.chars))
+    }
     const data = stageDataMap[stage]
     if (!data) return []
-    // 获取该阶段所有单元的所有字
     return data.units.flatMap(u => u.chars)
-  }, [stage])
+  }, [stage, isCamela])
   
   // allChars - 如果不足4个，从同等级字表中随机补充
   const allChars = useMemo(() => {
@@ -224,11 +230,8 @@ export default function WrongCharQuizPage() {
 
   // 获取显示标题
   const getTitle = () => {
-    if (stage === 1) {
-      const part = getPartByUnit(unit)
-      return `错字练习 - 基础识字 (${part}) 单元${unit}`
-    }
-    return `错字练习 - 第${stage}阶段 单元${unit}`
+    if (isCamela) return `错字练习 - 卡梅拉 阶段${stage - 10} 单元${unit}`
+    return `错字练习 - 基础练习 阶段${stage} 单元${unit}`
   }
 
   if (isLoading || !isHydrated) {
@@ -339,6 +342,7 @@ export default function WrongCharQuizPage() {
             onNext={handleNext}
             currentIndex={currentIndex}
             total={wrongChars.length}
+            useCamelaAudio={isCamela}
           />
         )}
       </div>

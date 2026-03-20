@@ -21,6 +21,8 @@ export const BADGES: BadgeDefinition[] = [
   { id: 'perfect_score', name: '完美发挥',   emoji: '💯', description: '单元满分（20/20）' },
   { id: 'perfect_3',     name: '三连满分',   emoji: '🎯', description: '连续3个单元满分' },
   { id: 'zero_wrong',    name: '知错能改',   emoji: '🧹', description: '错字本清零' },
+  { id: 'camela_1',      name: '小鸡卡梅拉', emoji: '🐥', description: '完成卡梅拉第1阶段' },
+  { id: 'camela_all',    name: '绘本小达人', emoji: '📖', description: '完成卡梅拉全部7个阶段' },
 ]
 
 export const getBadgeById = (id: string): BadgeDefinition | undefined =>

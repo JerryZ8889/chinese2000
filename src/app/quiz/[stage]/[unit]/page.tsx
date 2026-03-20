@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
@@ -34,6 +34,7 @@ export default function QuizPage() {
   const [wrongChars, setWrongChars] = useState<string[]>([])
   const [unitChars, setUnitChars] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const isCompletingRef = useRef(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
   const [savedProgress, setSavedProgress] = useState<{currentIndex: number, score: number, wrongChars: string[]} | null>(null)
@@ -105,9 +106,9 @@ export default function QuizPage() {
 
   // 每次答题后保存进度（有任何进展时才保存，避免初始加载时写入空记录）
   useEffect(() => {
-    if (!isLoading && user?.id && (currentIndex > 0 || score > 0 || wrongChars.length > 0)) {
+    if (!isLoading && user?.id && !isCompletingRef.current && (currentIndex > 0 || score > 0 || wrongChars.length > 0)) {
       const timer = setTimeout(() => {
-        saveCurrentProgress()
+        if (!isCompletingRef.current) saveCurrentProgress()
       }, 500)
       return () => clearTimeout(timer)
     }
@@ -161,6 +162,7 @@ export default function QuizPage() {
   }, [currentIndex, unitChars, user?.id, stage, unit])
 
   const handleComplete = useCallback(async () => {
+    isCompletingRef.current = true
     if (user?.id) {
       try {
         await saveUnitProgress({
@@ -174,7 +176,7 @@ export default function QuizPage() {
           wrong_chars: wrongChars,
           completed_at: new Date().toISOString()
         })
-        
+
         // 记录今日学习（用于统计连续天数）
         await recordStudy(user.id)
       } catch (error) {
@@ -203,11 +205,7 @@ export default function QuizPage() {
   }
 
   const getTitle = () => {
-    if (stage === 1) {
-      const part = getPartByUnit(unit)
-      return `基础识字 (${part}) - 单元 ${unit}`
-    }
-    return `第${stage}阶段 - 单元 ${unit}`
+    return `阶段${stage} - 单元 ${unit}`
   }
 
   if (!stageInfo || isLoading) {

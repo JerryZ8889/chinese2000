@@ -5,11 +5,18 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 // 会话内音频元素缓存，同一个字第二次播放直接复用
 const audioCache = new Map<string, HTMLAudioElement>()
 
-// 根据汉字获取 Supabase Storage 音频 URL
+// 根据汉字获取 Supabase Storage 音频 URL（基础练习 bucket，用 codepoint hex 作文件名）
 const getAudioUrl = (char: string): string | null => {
   const cp = char.codePointAt(0)
   if (!cp) return null
   return `${SUPABASE_URL}/storage/v1/object/public/audio/${cp.toString(16)}.mp3`
+}
+
+// 根据汉字获取卡梅拉 bucket 音频 URL（用 Unicode codepoint hex 作文件名，与 audio bucket 一致）
+const getCamelaAudioUrl = (char: string): string | null => {
+  const cp = char.codePointAt(0)
+  if (!cp || !SUPABASE_URL) return null
+  return `${SUPABASE_URL}/storage/v1/object/public/camela-audio/${cp.toString(16)}.mp3`
 }
 
 // 用预生成音频播放
@@ -91,3 +98,28 @@ export const preloadVoices = (): Promise<void> => {
 
 export const isSpeechSupported = (): boolean => true
 export const getCurrentVoice = (): SpeechSynthesisVoice | null => null
+
+// 卡梅拉专用播放函数：优先 camela-audio bucket，失败则降级 Web Speech API
+export const speakCamela = async (char: string): Promise<void> => {
+  const url = getCamelaAudioUrl(char)
+  if (url) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        let audio = audioCache.get(`camela:${char}`)
+        if (!audio) {
+          audio = new Audio(url)
+          audioCache.set(`camela:${char}`, audio)
+        } else {
+          audio.currentTime = 0
+        }
+        audio.onended = () => resolve()
+        audio.onerror = () => reject(new Error('音频加载失败'))
+        audio.play().catch(reject)
+      })
+      return
+    } catch {
+      // 降级到 Web Speech API
+    }
+  }
+  await speakWithWebSpeech(char)
+}

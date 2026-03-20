@@ -30,7 +30,7 @@ export default function ReportPage() {
   const [showBadgeModal, setShowBadgeModal] = useState(false)
 
   const accuracy = total > 0 ? Math.round((score / total) * 100) : 0
-  const starCount = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0
+  const starCount = accuracy >= 90 ? 3 : accuracy >= 50 ? 2 : 1
 
   // 等待 Zustand hydrate 完成
   useEffect(() => {
@@ -104,15 +104,11 @@ export default function ReportPage() {
 
   // 获取显示标题
   const getTitle = () => {
-    if (stage === 1) {
-      const part = getPartByUnit(unit)
-      return `基础识字 (${part}) - 单元 ${unit}`
-    }
-    return `第${stage}阶段 - 单元 ${unit}`
+    return `阶段${stage} - 单元 ${unit}`
   }
 
   const handleGoHome = () => {
-    router.push('/stages')
+    router.push('/home')
   }
 
   if (isLoading) {
