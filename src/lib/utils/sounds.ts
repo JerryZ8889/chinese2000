@@ -15,6 +15,8 @@ export const preloadSounds = () => {
     if (!audioCache[key]) {
       const audio = new Audio(url)
       audio.volume = 0.5
+      audio.preload = 'auto'
+      audio.load()
       audioCache[key] = audio
     }
   })
