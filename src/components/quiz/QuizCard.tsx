@@ -16,6 +16,9 @@ const getCharPinyin = (char: string): string =>
 const getCharPinyinWithTone = (char: string): string =>
   pinyin(char, { toneType: 'symbol', type: 'array' })[0] || char
 
+// 模块级标志：用户是否已在当前页面产生过交互（解锁音频权限）
+let audioUnlocked = false
+
 interface QuizCardProps {
   targetChar: string
   allChars: string[]
@@ -70,15 +73,20 @@ export default function QuizCard({
     setIsCorrect(null)
     setShowFeedback(false)
 
-    // 自动播放发音，延迟 400ms 等动画完成；2s 超时防止 autoplay 被拦截后卡住
+    // 第一题：用户还没交互过，浏览器会拦截自动播放 → 不播放，用动画引导点击
+    // 后续题：用户已交互，正常自动播放
+    if (!audioUnlocked) {
+      setIsPlaying(false)
+      return
+    }
+
     setIsPlaying(true)
     let cancelled = false
     const timer = setTimeout(async () => {
       try {
-        const raceTimeout = new Promise<void>(r => setTimeout(r, 2000))
-        await Promise.race([playChar(targetChar), raceTimeout])
+        await playChar(targetChar)
       } catch {
-        // autoplay blocked, ignore
+        // ignore
       } finally {
         if (!cancelled) setIsPlaying(false)
       }
@@ -92,6 +100,7 @@ export default function QuizCard({
   }, [targetChar, allChars])
 
   const handleSpeak = async () => {
+    audioUnlocked = true
     setIsPlaying(true)
     try {
       await playChar(targetChar)
@@ -104,6 +113,7 @@ export default function QuizCard({
 
   const handleCharClick = (char: string) => {
     if (isAnswered) return
+    audioUnlocked = true
 
     setIsAnswered(true)
     setSelectedChar(char)
@@ -148,8 +158,10 @@ export default function QuizCard({
         animate={{ scale: 1, opacity: 1 }}
         className="flex flex-col items-center mb-10"
       >
-        <p className="text-gray-500 text-sm mb-3">点击按钮听发音</p>
-        <SpeakerButton onClick={handleSpeak} isPlaying={isPlaying} />
+        <p className="text-gray-500 text-sm mb-3">
+          {!audioUnlocked ? '点击按钮开始听发音' : '点击按钮听发音'}
+        </p>
+        <SpeakerButton onClick={handleSpeak} isPlaying={isPlaying} showHint={!audioUnlocked && !isPlaying} />
       </motion.div>
 
       {/* 汉字选项 - 一排四个 */}

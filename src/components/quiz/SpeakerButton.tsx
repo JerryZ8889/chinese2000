@@ -6,13 +6,16 @@ import { Volume2 } from 'lucide-react'
 interface SpeakerButtonProps {
   onClick: () => void
   isPlaying?: boolean
+  showHint?: boolean
 }
 
-export default function SpeakerButton({ onClick, isPlaying = false }: SpeakerButtonProps) {
+export default function SpeakerButton({ onClick, isPlaying = false, showHint = false }: SpeakerButtonProps) {
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
+      animate={showHint && !isPlaying ? { scale: [1, 1.15, 1] } : {}}
+      transition={showHint && !isPlaying ? { duration: 1.2, repeat: Infinity } : {}}
       onClick={onClick}
       className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary-teal to-primary-mint text-white shadow-lg hover:shadow-xl transition-shadow"
     >
