@@ -24,6 +24,7 @@ export default function BookReaderPage() {
   const [direction, setDirection] = useState(0)
   const [speakingChar, setSpeakingChar] = useState<string | null>(null)
   const [masteredChars, setMasteredChars] = useState<Set<string>>(new Set())
+  const [touchStart, setTouchStart] = useState<number | null>(null)
 
   // All 2080 quiz chars
   const quizCharSet = useMemo(() =>
@@ -74,6 +75,18 @@ export default function BookReaderPage() {
       setDirection(-1)
       setCurrentPage(prev => prev - 1)
     }
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX)
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return
+    const diff = touchStart - e.changedTouches[0].clientX
+    if (diff > 60) goNext()      // swipe left → next
+    else if (diff < -60) goPrev() // swipe right → prev
+    setTouchStart(null)
   }
 
   // Wrap text so each Chinese char is tappable; unmastered chars get underline dot
@@ -183,7 +196,7 @@ export default function BookReaderPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-amber-50/30">
+    <main className="h-[100dvh] flex flex-col bg-amber-50/30 overflow-hidden">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -205,7 +218,11 @@ export default function BookReaderPage() {
       </motion.header>
 
       {/* Page content */}
-      <div className="flex-1 relative overflow-hidden">
+      <div
+        className="flex-1 relative overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={currentPage}
@@ -215,10 +232,10 @@ export default function BookReaderPage() {
             animate="center"
             exit="exit"
             transition={{ type: 'tween', duration: 0.25 }}
-            className="absolute inset-0 p-6 overflow-y-auto"
+            className="absolute inset-0 p-4 pb-2 overflow-y-auto"
           >
             <div className="max-w-lg mx-auto">
-              <div className="bg-white rounded-2xl shadow-sm p-6 min-h-[60vh]">
+              <div className="bg-white rounded-2xl shadow-sm p-5">
                 {/* Page number badge */}
                 <div className="flex justify-center mb-5">
                   <span className="px-3 py-1 bg-violet-100 text-violet-600 text-xs font-bold rounded-full">
@@ -232,8 +249,8 @@ export default function BookReaderPage() {
         </AnimatePresence>
       </div>
 
-      {/* Navigation */}
-      <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+      {/* Navigation — fixed at bottom of flex layout */}
+      <div className="flex-shrink-0 px-4 py-3 bg-white/90 backdrop-blur-sm border-t border-gray-100 safe-area-bottom">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <motion.button
             whileHover={{ scale: 1.1 }}
