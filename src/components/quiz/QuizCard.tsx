@@ -78,9 +78,10 @@ export default function QuizCard({
       return
     }
 
+    // 立即播放，不延迟（延迟会脱离用户手势作用域导致被拦截）
     setIsPlaying(true)
     let cancelled = false
-    const timer = setTimeout(async () => {
+    const play = async () => {
       try {
         await playChar(targetChar)
       } catch {
@@ -88,11 +89,11 @@ export default function QuizCard({
       } finally {
         if (!cancelled) setIsPlaying(false)
       }
-    }, 400)
+    }
+    play()
 
     return () => {
       cancelled = true
-      clearTimeout(timer)
       setIsPlaying(false)
     }
   }, [targetChar, allChars])
